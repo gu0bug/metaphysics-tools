@@ -1,0 +1,84 @@
+/* 全局双模式色彩体系定义 */
+:root {
+    /* 浅色模式 (Light Mode) */
+    --bg-primary: #F7F7F5;
+    --bg-surface: #FFFFFF;
+    --border-base: #E5E5E0;
+    --text-main: #1A1A1A;
+    --text-secondary: #666666;
+    --accent-gold: #A67C00;
+    --state-selected: #F0F0EE;
+    --btn-primary: #1D2D44;
+}
+
+html.dark {
+    /* 暗黑模式 (Dark Mode) */
+    --bg-primary: #121212;
+    --bg-surface: #1A1B1C;
+    --border-base: #333333;
+    --text-main: #E0E0E0;
+    --text-secondary: #888888;
+    --accent-gold: #CBA052;
+    --state-selected: #2A2A2A;
+    --btn-primary: #1D2D44;
+}
+
+/* 基础样式挂载与过渡动画 */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.surface-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-base);
+    transition: all 0.3s ease;
+}
+
+.surface-card:hover {
+    border-color: var(--text-secondary);
+    transform: translateY(-2px);
+}
+
+.surface-card:active {
+    background-color: var(--state-selected);
+    transform: translateY(0);
+}
+
+.font-serif-sc {
+    font-family: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+}
+
+.text-accent {
+    color: var(--accent-gold);
+}
+
+.input-base {
+    background-color: transparent;
+    border: 1px solid var(--border-base);
+    color: var(--text-main);
+}
+
+.modal-enter { opacity: 1 !important; pointer-events: auto !important; }
+.sheet-enter { transform: translateY(0) !important; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.text-tiny-lunar { font-size: 12px; transform: scale(0.85); white-space: nowrap; }
+
+/* 隐藏原生下拉框外观，保留移动端原生滚轮交互 */
+.select-native-overlay {
+    appearance: none;
+    -webkit-appearance: none;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+}

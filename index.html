@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知命 - 新中式极简命理引擎</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lunar-javascript/lunar.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="min-h-screen flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8 selection:bg-gray-500 selection:text-white">
+
+    <header class="w-full max-w-4xl flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-serif-sc tracking-widest">知命</h1>
+        <button id="themeToggle" class="text-sm px-4 py-2 surface-card rounded-md cursor-pointer">
+            切换昼夜模式
+        </button>
+    </header>
+
+    <main class="w-full max-w-4xl flex flex-col gap-6">
+
+        <section class="surface-card rounded-xl p-8 sm:p-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div class="flex flex-col gap-2">
+                <p id="today-gregorian" class="text-sm tracking-wider" style="color: var(--text-secondary);"></p>
+                <h2 class="text-4xl sm:text-5xl font-serif-sc tracking-widest mt-2">
+                    <span id="today-lunar-month"></span> <span id="today-lunar-day" class="text-accent text-3xl sm:text-4xl"></span>
+                </h2>
+                <div class="flex gap-4 mt-4 text-sm tracking-widest" style="color: var(--text-secondary);">
+                    <span id="today-bazi-year"></span>
+                    <span id="today-bazi-month"></span>
+                    <span id="today-bazi-day"></span>
+                </div>
+            </div>
+
+            <div class="text-left sm:text-right border-l-2 sm:border-l-0 sm:border-r-2 pl-4 sm:pl-0 sm:pr-4 flex flex-col justify-center items-start sm:items-end" style="border-color: var(--accent-gold);">
+                <p id="today-solar-term" class="text-2xl font-serif-sc tracking-widest text-accent mb-4"></p>
+                <a href="https://gu0bug.github.io/" target="_blank" rel="noopener noreferrer"
+                    class="text-xs tracking-widest px-4 py-2 surface-card rounded-md cursor-pointer hover:text-accent transition-colors flex items-center justify-center">
+                    关于我
+                </a>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
+
+            <a href="minggong.html" class="surface-card rounded-xl p-8 block cursor-pointer group">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-serif-sc tracking-wider">算命宫</h3>
+                    <span class="text-2xl opacity-50 group-hover:opacity-100 transition-opacity">◓</span>
+                </div>
+                <p class="text-sm leading-relaxed" style="color: var(--text-secondary);">基于出生时辰，推导十二宫位，洞察先天格局与生命轨迹。</p>
+            </a>
+
+            <a href="#" class="surface-card rounded-xl p-8 block cursor-pointer group">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-serif-sc tracking-wider">算八字</h3>
+                    <span class="text-2xl opacity-50 group-hover:opacity-100 transition-opacity">☵</span>
+                </div>
+                <p class="text-sm leading-relaxed" style="color: var(--text-secondary);">排盘四柱干支，解读大运流年，分析五行生克与人生运势。</p>
+            </a>
+
+            <a href="#" class="surface-card rounded-xl p-8 block cursor-pointer group">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-serif-sc tracking-wider">求签</h3>
+                    <span class="text-2xl opacity-50 group-hover:opacity-100 transition-opacity">▤</span>
+                </div>
+                <p class="text-sm leading-relaxed" style="color: var(--text-secondary);">心诚则灵，随机抽取六十甲子签文，寻求解惑与神明指引。</p>
+            </a>
+
+            <a href="#" class="surface-card rounded-xl p-8 block cursor-pointer group">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-serif-sc tracking-wider">圣杯</h3>
+                    <span class="text-2xl opacity-50 group-hover:opacity-100 transition-opacity">☽</span>
+                </div>
+                <p class="text-sm leading-relaxed" style="color: var(--text-secondary);">线上模拟掷杯问卜，以阴阳杯象决断心中疑虑与迷津。</p>
+            </a>
+
+        </section>
+    </main>
+
+    <footer class="w-full max-w-4xl mt-16 flex flex-wrap justify-center items-center gap-6 text-xs tracking-widest pb-8" style="color: var(--text-secondary);">
+        <p>© 2026 Metaphysics Tools. All computations run locally.</p>
+        <a href="https://github.com/gu0bug" target="_blank" rel="noopener noreferrer" class="hover:opacity-80 transition-opacity flex items-center gap-2 group">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current group-hover:text-white transition-colors" style="color: var(--text-secondary);">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+            </svg>
+            <span class="group-hover:text-white transition-colors">@gu0bug</span>
+        </a>
+    </footer>
+
+    <script>
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const htmlElement = document.documentElement;
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (htmlElement.classList.contains('dark')) {
+                htmlElement.classList.remove('dark');
+            } else {
+                htmlElement.classList.add('dark');
+            }
+        });
+
+        // Initialize Lunar content
+        const today = new Date();
+        const lunar = Lunar.fromDate(today);
+
+        document.getElementById('today-gregorian').innerText = `公元 ${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日`;
+        document.getElementById('today-lunar-month').innerText = lunar.getMonthInChinese() + '月';
+        document.getElementById('today-lunar-day').innerText = lunar.getDayInChinese();
+
+        document.getElementById('today-bazi-year').innerText = `${lunar.getYearInGanZhi()}年 (${lunar.getYearShengXiao()})`;
+        document.getElementById('today-bazi-month').innerText = `${lunar.getMonthInGanZhi()}月`;
+        document.getElementById('today-bazi-day').innerText = `${lunar.getDayInGanZhi()}日`;
+
+        try {
+            const prevJieQi = lunar.getPrevJieQi(true);
+            const nextJieQi = lunar.getNextJieQi(true);
+            const prevDiff = Math.abs(today.getTime() - prevJieQi.getSolar().getCalendar().getTime());
+            const nextDiff = Math.abs(today.getTime() - nextJieQi.getSolar().getCalendar().getTime());
+            const nearestTerm = prevDiff < nextDiff ? prevJieQi.getName() : nextJieQi.getName();
+            document.getElementById('today-solar-term').innerText = nearestTerm;
+        } catch(e) {
+            console.error("Error finding solar term:", e);
+            document.getElementById('today-solar-term').innerText = "";
+        }
+    </script>
+</body>
+
+</html>
