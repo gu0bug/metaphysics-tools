@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>算命宫 - 知命</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-primary: #F7F7F5;
+            --bg-surface: #FFFFFF;
+            --border-base: #E5E5E0;
+            --text-main: #1A1A1A;
+            --text-secondary: #666666;
+            --accent-gold: #A67C00;
+            --state-selected: #F0F0EE;
+            --btn-primary: #1D2D44;
+        }
+
+        html.dark {
+            --bg-primary: #121212;
+            --bg-surface: #1A1B1C;
+            --border-base: #333333;
+            --text-main: #E0E0E0;
+            --text-secondary: #888888;
+            --accent-gold: #CBA052;
+            --state-selected: #2A2A2A;
+            --btn-primary: #1D2D44;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans SC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .surface-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-base);
+            transition: all 0.3s ease;
+        }
+
+        .font-serif-sc { font-family: 'Noto Serif SC', 'Songti SC', serif; }
+        .text-accent { color: var(--accent-gold); }
+
+        .input-base {
+            background-color: transparent;
+            border: 1px solid var(--border-base);
+            color: var(--text-main);
+        }
+        
+        .modal-enter { opacity: 1 !important; pointer-events: auto !important; }
+        .sheet-enter { transform: translateY(0) !important; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .text-tiny-lunar { font-size: 12px; transform: scale(0.85); white-space: nowrap; }
+
+        /* 隐藏原生下拉框外观，保留移动端原生滚轮交互 */
+        .select-native-overlay {
+            appearance: none;
+            -webkit-appearance: none;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-6 px-4 sm:px-6 lg:px-8 selection:bg-gray-500 selection:text-white relative overflow-x-hidden">
+
+    <header class="w-full max-w-4xl flex justify-between items-center mb-8 sm:mb-12 z-10">
+        <a href="index.html" class="text-sm px-4 py-2 surface-card rounded-md cursor-pointer hover:border-gray-500 transition-colors">← 返回</a>
+        <h1 class="text-2xl font-serif-sc tracking-widest text-center absolute left-1/2 -translate-x-1/2">算命宫</h1>
+        <div class="w-[74px]"></div>
+    </header>
+
+    <main class="w-full max-w-4xl flex flex-col flex-1 z-10">
+        <section id="input-view" class="w-full max-w-md mx-auto flex flex-col gap-6 animate-fade-in">
+            <div class="surface-card rounded-xl p-6 sm:p-8">
+                <div class="flex p-1 rounded-md mb-8" style="background-color: var(--bg-primary);">
+                    <button class="flex-1 py-2 text-sm font-serif-sc rounded tracking-widest transition-colors" style="background-color: var(--state-selected); color: var(--accent-gold);">公历</button>
+                    <button class="flex-1 py-2 text-sm font-serif-sc rounded tracking-widest opacity-50 hover:opacity-100 transition-opacity">农历</button>
+                </div>
+
+                <div class="flex flex-col gap-5">
+                    <div>
+                        <label class="block text-xs mb-2 tracking-widest" style="color: var(--text-secondary);">出生日期</label>
+                        <div id="date-trigger" class="input-base w-full p-3 rounded-md text-sm font-mono tracking-widest cursor-pointer flex justify-between items-center hover:border-gray-500 transition-colors">
+                            <span id="selected-date-text">2000 年 01 月 01 日</span>
+                            <span class="text-xs opacity-50">▼</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs mb-2 tracking-widest" style="color: var(--text-secondary);">出生时辰</label>
+                        <div class="relative">
+                            <select class="input-base w-full p-3 rounded-md text-sm cursor-pointer outline-none appearance-none bg-transparent relative z-10">
+                                <option value="子" selected>子时 (23:00 - 00:59)</option>
+                                <option value="丑">丑时 (01:00 - 02:59)</option>
+                                <option value="寅">寅时 (03:00 - 04:59)</option>
+                                <option value="卯">卯时 (05:00 - 06:59)</option>
+                                <option value="辰">辰时 (07:00 - 08:59)</option>
+                                <option value="巳">巳时 (09:00 - 10:59)</option>
+                                <option value="午">午时 (11:00 - 12:59)</option>
+                                <option value="未">未时 (13:00 - 14:59)</option>
+                                <option value="申">申时 (15:00 - 16:59)</option>
+                                <option value="酉">酉时 (17:00 - 18:59)</option>
+                                <option value="戌">戌时 (19:00 - 20:59)</option>
+                                <option value="亥">亥时 (21:00 - 22:59)</option>
+                            </select>
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs opacity-50 pointer-events-none z-0">▼</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs mb-2 tracking-widest" style="color: var(--text-secondary);">性别</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer text-sm">
+                                <input type="radio" name="gender" value="M" checked class="accent-gray-500"> 乾造 (男)
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-sm">
+                                <input type="radio" name="gender" value="F" class="accent-gray-500"> 坤造 (女)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="calculate-btn" class="w-full py-4 rounded-xl text-white font-serif-sc tracking-[0.2em] text-lg hover:opacity-90 transition-opacity" style="background-color: var(--btn-primary);">
+                开始排盘
+            </button>
+        </section>
+
+        <section id="result-view" class="w-full hidden flex-col gap-8 animate-fade-in">
+            
+            <div class="surface-card rounded-xl p-8 sm:p-12 min-h-[300px] flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                <div class="absolute -top-10 -right-10 text-[160px] font-serif-sc opacity-5 select-none pointer-events-none" id="bg-watermark">命</div>
+                
+                <p class="text-sm tracking-widest mb-2" style="color: var(--text-secondary);">天干地支：戊午</p>
+                <h2 id="active-palace-name" class="text-5xl sm:text-6xl font-serif-sc text-accent mt-2 mb-6 tracking-widest">命宫</h2>
+                
+                <div class="flex flex-wrap justify-center gap-4 text-xl font-serif-sc mb-6">
+                    <span class="px-3 py-1 border rounded" style="border-color: var(--text-secondary);">紫微</span>
+                    <span class="px-3 py-1 border rounded" style="border-color: var(--text-secondary);">天相</span>
+                </div>
+
+                <p class="text-sm leading-relaxed max-w-lg mx-auto" style="color: var(--text-secondary);">
+                    命宫主宰先天格局与性格特质。紫微天相坐命，为人具威仪与领导力，处事讲究体面，重信诺。
+                </p>
+            </div>
+
+            <div class="w-full flex flex-col items-center">
+                <p class="text-xs mb-4 tracking-widest" style="color: var(--text-secondary);">选择宫位查看详情</p>
+                <div id="palace-tabs" class="flex flex-wrap justify-center gap-2 sm:gap-3 w-full max-w-3xl">
+                    </div>
+            </div>
+
+            <div class="flex justify-center mt-4 pb-10">
+                <button id="reset-btn" class="text-xs tracking-[0.3em] px-8 py-3 surface-card rounded-full cursor-pointer opacity-60 hover:opacity-100 transition-opacity">
+                    重新排盘
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <div id="date-picker-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300 flex flex-col justify-end sm:justify-center items-center">
+        <div class="absolute inset-0 z-0" id="close-overlay"></div>
+        <div id="date-picker-sheet" class="surface-card w-full sm:w-[420px] rounded-t-2xl sm:rounded-2xl p-6 z-10 transform translate-y-full sm:translate-y-10 sm:scale-95 transition-all duration-300 ease-out flex flex-col shadow-2xl">
+            <div class="w-12 h-1.5 rounded-full bg-gray-500/30 mx-auto mb-6 sm:hidden"></div>
+            
+            <div class="flex justify-between items-center mb-6 font-serif-sc px-2">
+                <button id="prev-month" class="p-2 text-xl hover:text-accent transition-colors cursor-pointer w-8">&lt;</button>
+                
+                <div class="text-lg tracking-widest flex items-center gap-3">
+                    <div class="relative flex items-center gap-1 px-3 py-1.5 rounded-lg border focus-within:border-accent-gold transition-colors" style="border-color: var(--border-base);">
+                        <select id="select-year" class="select-native-overlay text-base"></select>
+                        <span id="display-year" class="pointer-events-none">2000</span>
+                        <span class="pointer-events-none text-sm">年</span>
+                        <svg class="w-3 h-3 opacity-50 ml-1 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+
+                    <div class="relative flex items-center gap-1 px-3 py-1.5 rounded-lg border focus-within:border-accent-gold transition-colors" style="border-color: var(--border-base);">
+                        <select id="select-month" class="select-native-overlay text-base"></select>
+                        <span id="display-month" class="pointer-events-none">01</span>
+                        <span class="pointer-events-none text-sm">月</span>
+                        <svg class="w-3 h-3 opacity-50 ml-1 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                </div>
+                
+                <button id="next-month" class="p-2 text-xl hover:text-accent transition-colors cursor-pointer w-8">&gt;</button>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2 tracking-widest opacity-60 font-serif-sc">
+                <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+            </div>
+            
+            <div id="calendar-grid" class="grid grid-cols-7 gap-y-1 gap-x-1 text-center font-mono"></div>
+            
+            <button id="confirm-date-btn" class="w-full mt-6 py-3 rounded-lg border text-sm font-serif-sc tracking-[0.2em] transition-colors cursor-pointer" style="border-color: var(--border-base); background-color: var(--state-selected); color: var(--accent-gold);">确定</button>
+        </div>
+    </div>
+
+    <script>
+        // ======= 12宫位换行 Tabs 逻辑 =======
+        const palaces = ['命宫', '兄弟', '夫妻', '子女', '财帛', '疾厄', '迁移', '交友', '官禄', '田宅', '福德', '父母'];
+        let activePalaceIndex = 0;
+
+        function renderTabs() {
+            const container = document.getElementById('palace-tabs');
+            container.innerHTML = '';
+            palaces.forEach((palace, index) => {
+                const isActive = index === activePalaceIndex;
+                const tab = document.createElement('button');
+                // 确保最小宽度一致，这样即使在多行布局下也能整齐对齐
+                tab.className = `min-w-[70px] sm:min-w-[85px] px-3 py-2 sm:px-4 sm:py-3 rounded-md font-serif-sc text-xs sm:text-sm tracking-widest transition-all cursor-pointer border ${isActive ? 'text-accent' : ''}`;
+                
+                if(isActive) {
+                    tab.style.backgroundColor = 'var(--state-selected)';
+                    tab.style.borderColor = 'var(--accent-gold)';
+                } else {
+                    tab.style.backgroundColor = 'var(--bg-surface)';
+                    tab.style.borderColor = 'var(--border-base)';
+                    tab.style.color = 'var(--text-secondary)';
+                }
+
+                tab.innerText = palace;
+                tab.onclick = () => {
+                    activePalaceIndex = index;
+                    renderTabs();
+                    // 更新大卡片文字
+                    document.getElementById('active-palace-name').innerText = palace + (palace.length === 2 ? '宫' : '');
+                    document.getElementById('bg-watermark').innerText = palace.charAt(0);
+                    // 点击后自动平滑滚动回页首查看卡片详情
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+                container.appendChild(tab);
+            });
+        }
+
+        // ======= 状态切换绑定 =======
+        document.getElementById('calculate-btn').onclick = () => {
+            document.getElementById('input-view').classList.add('hidden');
+            document.getElementById('result-view').classList.remove('hidden');
+            renderTabs(); // 动态生成那 12 个宫位标签
+        };
+
+        document.getElementById('reset-btn').onclick = () => {
+            document.getElementById('result-view').classList.add('hidden');
+            document.getElementById('input-view').classList.remove('hidden');
+            activePalaceIndex = 0; // 重置选中状态
+        };
+
+
+        // ======= 日历核心逻辑 =======
+        let targetDate = new Date(2000, 0, 1);
+        let viewDate = new Date(2000, 0, 1);
+        const pad = (n) => n.toString().padStart(2, '0');
+        const mockLunarData = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十", "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十", "初一"];
+
+        const yearSelect = document.getElementById('select-year');
+        const monthSelect = document.getElementById('select-month');
+        const displayYear = document.getElementById('display-year');
+        const displayMonth = document.getElementById('display-month');
+
+        // 初始化下拉框选项
+        const currentYear = new Date().getFullYear();
+        for (let y = 1900; y <= currentYear + 5; y++) {
+            const opt = document.createElement('option'); opt.value = y; opt.text = y + " 年";
+            opt.style.backgroundColor = "var(--bg-surface)"; opt.style.color = "var(--text-main)";
+            yearSelect.appendChild(opt);
+        }
+        for (let m = 0; m < 12; m++) {
+            const opt = document.createElement('option'); opt.value = m; opt.text = pad(m + 1) + " 月";
+            opt.style.backgroundColor = "var(--bg-surface)"; opt.style.color = "var(--text-main)";
+            monthSelect.appendChild(opt);
+        }
+
+        // 监听原生 Select 变更，同步 UI
+        yearSelect.addEventListener('change', (e) => { 
+            viewDate.setFullYear(parseInt(e.target.value)); 
+            renderCalendar(); 
+        });
+        monthSelect.addEventListener('change', (e) => { 
+            viewDate.setMonth(parseInt(e.target.value)); 
+            renderCalendar(); 
+        });
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+            
+            // 同步 Select 状态和显示文本
+            yearSelect.value = year;
+            monthSelect.value = month;
+            displayYear.innerText = year;
+            displayMonth.innerText = pad(month + 1);
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            
+            grid.innerHTML = '';
+            let currentCellCount = 0;
+
+            for(let i = firstDay - 1; i >= 0; i--) {
+                grid.appendChild(createCell(year, month - 1, prevMonthDays - i, 'other-month'));
+                currentCellCount++;
+            }
+            for(let i = 1; i <= daysInMonth; i++) {
+                const isSelected = targetDate.getFullYear() === year && targetDate.getMonth() === month && targetDate.getDate() === i;
+                grid.appendChild(createCell(year, month, i, isSelected ? 'selected' : 'current-month'));
+                currentCellCount++;
+            }
+            let nextMonthDay = 1;
+            while(currentCellCount < 42) {
+                grid.appendChild(createCell(year, month + 1, nextMonthDay, 'other-month'));
+                nextMonthDay++;
+                currentCellCount++;
+            }
+        }
+
+        function createCell(y, m, d, state) {
+            const cell = document.createElement('div');
+            let classes = `aspect-square flex flex-col items-center justify-center rounded-lg cursor-pointer transition-colors hover:bg-gray-500/20 py-1 `;
+            let styles = ``;
+
+            if (state === 'selected') {
+                classes += `border `;
+                styles = `border-color: var(--accent-gold); background-color: var(--state-selected); color: var(--accent-gold);`;
+            } else if (state === 'other-month') {
+                classes += `opacity-30 `;
+            }
+
+            cell.className = classes;
+            cell.style.cssText = styles;
+
+            const solarSpan = document.createElement('span');
+            solarSpan.className = `text-[15px] leading-none mb-[2px] font-medium`;
+            solarSpan.innerText = d;
+
+            const lunarSpan = document.createElement('span');
+            lunarSpan.className = `text-tiny-lunar font-serif-sc opacity-80`;
+            lunarSpan.innerText = mockLunarData[d % 30]; 
+
+            cell.appendChild(solarSpan);
+            cell.appendChild(lunarSpan);
+
+            cell.onclick = () => {
+                targetDate = new Date(y, m, d);
+                viewDate = new Date(y, m, 1);
+                renderCalendar(); 
+            };
+            return cell;
+        }
+
+        document.getElementById('date-trigger').onclick = () => {
+            viewDate = new Date(targetDate);
+            document.getElementById('date-picker-overlay').classList.add('modal-enter');
+            document.getElementById('date-picker-sheet').classList.add('sheet-enter');
+            renderCalendar();
+        };
+
+        document.getElementById('close-overlay').onclick = () => {
+            document.getElementById('date-picker-overlay').classList.remove('modal-enter');
+            document.getElementById('date-picker-sheet').classList.remove('sheet-enter');
+        };
+
+        document.getElementById('confirm-date-btn').onclick = () => {
+            document.getElementById('selected-date-text').innerText = `${targetDate.getFullYear()} 年 ${pad(targetDate.getMonth()+1)} 月 ${pad(targetDate.getDate())} 日`;
+            document.getElementById('close-overlay').click();
+        };
+
+        document.getElementById('prev-month').onclick = () => { viewDate.setMonth(viewDate.getMonth()-1); renderCalendar(); };
+        document.getElementById('next-month').onclick = () => { viewDate.setMonth(viewDate.getMonth()+1); renderCalendar(); };
+    </script>
+</body>
+</html>
