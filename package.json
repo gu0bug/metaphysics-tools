@@ -1,5 +1,11 @@
 {
+  "scripts": {
+    "build:bazi": "terser bazi.js --compress passes=3,drop_console=true,pure_getters=false --mangle --output bazi.min.js --source-map \"url='bazi.min.js.map'\""
+  },
   "dependencies": {
     "lunar-javascript": "^1.7.7"
+  },
+  "devDependencies": {
+    "terser": "^5.46.1"
   }
 }

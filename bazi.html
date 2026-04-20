@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>算八字 - 知命</title>
+    <meta name="description" content="排盘四柱干支，解读大运流年，分析五行生克与人生运势。">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lunar-javascript/lunar.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .text-tiny { font-size: 10px; transform: scale(0.9); white-space: nowrap; }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 日柱光晕 */
+        #stem-day {
+            text-shadow: 0 0 18px rgba(203,160,82,0.35);
+        }
+
+        /* 大运滚动 */
+        #dayun-container {
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+        }
+        #dayun-container > div {
+            scroll-snap-align: start;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-6 px-4 sm:px-6 lg:px-8 selection:bg-gray-500 selection:text-white relative overflow-x-hidden">
+
+    <header class="w-full max-w-4xl flex justify-between items-center mb-8 sm:mb-12 z-10">
+        <a href="index.html" class="text-sm px-4 py-2 surface-card rounded-md cursor-pointer hover:border-gray-500 transition-colors" style="text-decoration:none;">← 返回</a>
+        <h1 class="text-2xl font-serif-sc tracking-widest text-center absolute left-1/2 -translate-x-1/2">算八字</h1>
+        <div class="w-[74px]"></div>
+    </header>
+
+    <main class="w-full max-w-4xl flex flex-col flex-1 z-10">
+
+        <!-- ══ 输入区 ══ -->
+        <section id="input-view" class="w-full max-w-md mx-auto flex flex-col gap-6 animate-fade-in">
+            <div class="surface-card rounded-xl p-6 sm:p-8">
+
+                <div class="flex p-1 rounded-md mb-8" style="background-color:var(--bg-primary);">
+                    <button class="flex-1 py-2 text-sm font-serif-sc rounded tracking-widest transition-colors" style="background-color:var(--state-selected);color:var(--accent-gold);">公历</button>
+                    <button class="flex-1 py-2 text-sm font-serif-sc rounded tracking-widest opacity-50 hover:opacity-100 transition-opacity">农历</button>
+                </div>
+
+                <div class="flex flex-col gap-5">
+
+                    <!-- 出生日期 -->
+                    <div>
+                        <label class="block text-xs mb-2 tracking-widest" style="color:var(--text-secondary);">出生日期</label>
+                        <div id="date-trigger" class="input-base w-full p-3 rounded-md text-sm font-mono tracking-widest cursor-pointer flex justify-between items-center hover:border-gray-500 transition-colors">
+                            <span id="selected-date-text">2000 年 01 月 01 日</span>
+                            <span class="text-xs opacity-50">▼</span>
+                        </div>
+                    </div>
+
+                    <!-- 出生时辰 -->
+                    <div>
+                        <label class="block text-xs mb-2 tracking-widest" style="color:var(--text-secondary);">出生时辰</label>
+                        <div class="relative">
+                            <select id="time-select" class="input-base w-full p-3 rounded-md text-sm cursor-pointer outline-none appearance-none bg-transparent relative z-10">
+                                <option value="0">子时 (23:00 - 00:59)</option>
+                                <option value="2">丑时 (01:00 - 02:59)</option>
+                                <option value="4">寅时 (03:00 - 04:59)</option>
+                                <option value="6">卯时 (05:00 - 06:59)</option>
+                                <option value="8">辰时 (07:00 - 08:59)</option>
+                                <option value="10">巳时 (09:00 - 10:59)</option>
+                                <option value="12">午时 (11:00 - 12:59)</option>
+                                <option value="14">未时 (13:00 - 14:59)</option>
+                                <option value="16">申时 (15:00 - 16:59)</option>
+                                <option value="18">酉时 (17:00 - 18:59)</option>
+                                <option value="20">戌时 (19:00 - 20:59)</option>
+                                <option value="22">亥时 (21:00 - 22:59)</option>
+                            </select>
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs opacity-50 pointer-events-none z-0">▼</span>
+                        </div>
+                    </div>
+
+                    <!-- 性别 -->
+                    <div>
+                        <label class="block text-xs mb-2 tracking-widest" style="color:var(--text-secondary);">性别</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer text-sm">
+                                <input type="radio" name="gender" value="1" checked class="accent-gray-500"> 乾造 (男)
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-sm">
+                                <input type="radio" name="gender" value="0" class="accent-gray-500"> 坤造 (女)
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <button id="calculate-btn" class="w-full py-4 rounded-xl text-white font-serif-sc tracking-[0.2em] text-lg hover:opacity-90 transition-opacity" style="background-color:var(--btn-primary);">
+                开始排盘
+            </button>
+        </section>
+
+        <!-- ══ 结果区 ══ -->
+        <section id="result-view" class="w-full hidden flex-col gap-6 animate-fade-in max-w-2xl mx-auto">
+
+            <!-- 四柱主卡 -->
+            <div class="surface-card rounded-xl p-6 sm:p-10 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 text-[160px] font-serif-sc opacity-5 select-none pointer-events-none">命</div>
+
+                <div class="flex justify-between items-end mb-8 border-b pb-4" style="border-color:var(--border-base);">
+                    <div>
+                        <p class="text-xs tracking-widest mb-1" style="color:var(--text-secondary);">公历：<span id="res-gregorian"></span></p>
+                        <p class="text-xs tracking-widest" style="color:var(--text-secondary);">农历：<span id="res-lunar"></span></p>
+                    </div>
+                    <span id="res-gender" class="px-2 py-1 text-xs border rounded" style="border-color:var(--text-secondary);color:var(--text-secondary);">乾造</span>
+                </div>
+
+                <!-- 时 日 月 年 四柱 -->
+                <div class="grid grid-cols-4 gap-2 sm:gap-4 text-center mb-8">
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs mb-3" style="color:var(--text-secondary);">时柱</span>
+                        <div class="flex flex-col gap-1 text-3xl sm:text-4xl font-serif-sc">
+                            <span id="stem-time"></span>
+                            <span id="branch-time"></span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs mb-3 text-accent font-bold">日柱 (我)</span>
+                        <div class="flex flex-col gap-1 text-3xl sm:text-4xl font-serif-sc">
+                            <span id="stem-day" class="text-accent font-bold"></span>
+                            <span id="branch-day" class="text-accent"></span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs mb-3" style="color:var(--text-secondary);">月柱</span>
+                        <div class="flex flex-col gap-1 text-3xl sm:text-4xl font-serif-sc">
+                            <span id="stem-month"></span>
+                            <span id="branch-month"></span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs mb-3" style="color:var(--text-secondary);">年柱</span>
+                        <div class="flex flex-col gap-1 text-3xl sm:text-4xl font-serif-sc">
+                            <span id="stem-year"></span>
+                            <span id="branch-year"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 纳音 -->
+                <p class="text-xs text-center tracking-widest opacity-50" id="res-nayin"></p>
+            </div>
+
+            <!-- 大运 -->
+            <details class="surface-card rounded-xl group overflow-hidden" open>
+                <summary class="cursor-pointer p-6 font-serif-sc text-lg tracking-widest flex justify-between items-center select-none outline-none">
+                    <span>大运 <span class="text-xs tracking-normal ml-2 opacity-50 font-sans">十年生命轨迹</span></span>
+                    <span class="text-sm group-open:rotate-180 transition-transform duration-300">▼</span>
+                </summary>
+                <div class="p-6 pt-0 border-t" style="border-color:var(--border-base);">
+                    <div id="dayun-container" class="flex flex-wrap justify-center gap-3 sm:gap-4 pt-6 pb-2 no-scrollbar"></div>
+                </div>
+            </details>
+
+            <!-- 流年 -->
+            <details class="surface-card rounded-xl group overflow-hidden">
+                <summary class="cursor-pointer p-6 font-serif-sc text-lg tracking-widest flex justify-between items-center select-none outline-none">
+                    <span>流年 <span class="text-xs tracking-normal ml-2 opacity-50 font-sans">近期岁运更迭</span></span>
+                    <span class="text-sm group-open:rotate-180 transition-transform duration-300">▼</span>
+                </summary>
+                <div class="p-6 pt-0 border-t" style="border-color:var(--border-base);">
+                    <div id="liunian-grid" class="grid grid-cols-5 gap-2 pt-6 text-center text-sm font-serif-sc opacity-80"></div>
+                </div>
+            </details>
+
+            <div class="flex justify-center mt-4 pb-10">
+                <button id="reset-btn" class="text-xs tracking-[0.3em] px-8 py-3 surface-card rounded-full cursor-pointer opacity-60 hover:opacity-100 transition-opacity">
+                    重新排盘
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- 日期选择器底部弹出层 -->
+    <div id="date-picker-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300 flex flex-col justify-end sm:justify-center items-center">
+        <div class="absolute inset-0 z-0" id="close-overlay"></div>
+        <div id="date-picker-sheet" class="surface-card w-full sm:w-[420px] rounded-t-2xl sm:rounded-2xl p-6 z-10 transform translate-y-full sm:translate-y-10 sm:scale-95 transition-all duration-300 ease-out flex flex-col shadow-2xl">
+            <div class="w-12 h-1.5 rounded-full bg-gray-500/30 mx-auto mb-6 sm:hidden"></div>
+
+            <div class="flex justify-between items-center mb-6 font-serif-sc px-2">
+                <button id="prev-month" class="p-2 text-xl hover:text-accent transition-colors cursor-pointer w-8">&lt;</button>
+                <div class="text-lg tracking-widest flex items-center gap-3">
+                    <div class="relative flex items-center gap-1 px-3 py-1.5 rounded-lg border focus-within:border-accent-gold transition-colors" style="border-color:var(--border-base);">
+                        <select id="select-year" class="select-native-overlay text-base"></select>
+                        <span id="display-year" class="pointer-events-none">2000</span>
+                        <span class="pointer-events-none text-sm">年</span>
+                        <svg class="w-3 h-3 opacity-50 ml-1 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                    <div class="relative flex items-center gap-1 px-3 py-1.5 rounded-lg border focus-within:border-accent-gold transition-colors" style="border-color:var(--border-base);">
+                        <select id="select-month" class="select-native-overlay text-base"></select>
+                        <span id="display-month" class="pointer-events-none">01</span>
+                        <span class="pointer-events-none text-sm">月</span>
+                        <svg class="w-3 h-3 opacity-50 ml-1 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                </div>
+                <button id="next-month" class="p-2 text-xl hover:text-accent transition-colors cursor-pointer w-8">&gt;</button>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2 tracking-widest opacity-60 font-serif-sc">
+                <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 gap-y-1 gap-x-1 text-center font-mono"></div>
+            <button id="confirm-date-btn" class="w-full mt-6 py-3 rounded-lg border text-sm font-serif-sc tracking-[0.2em] transition-colors cursor-pointer" style="border-color:var(--border-base);background-color:var(--state-selected);color:var(--accent-gold);">确定</button>
+        </div>
+    </div>
+
+    <!-- 脚本：先加载 lunar.js，再加载业务逻辑 -->
+    <script src="bazi.min.js"></script>
+</body>
+</html>
