@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圣杯 - 知命</title>
+    <meta name="description" content="线上模拟掷杯问卜，以阴阳杯象决断心中疑虑与迷津。">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* ====== 3D 杯筊核心样式 ====== */
+        .scene {
+            perspective: 1200px;
+        }
+        .cup-wrapper {
+            width: 80px;
+            height: 140px;
+            transform-style: preserve-3d;
+            transform: rotateY(0deg) rotateZ(0deg);
+            will-change: transform;
+        }
+        .cup-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /* 阳面 (平面) - 镂空线框代表平滑的切面 */
+        .cup-front {
+            transform: rotateY(0deg);
+        }
+        /* 阴面 (凸面) - 实心代表隆起的圆弧面 */
+        .cup-back {
+            transform: rotateY(180deg);
+        }
+
+        /* 模态框动画 */
+        .modal-scale-enter { transform: scale(1) !important; }
+
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 焦点边框金色高亮 */
+        #question-input:focus {
+            border-color: var(--accent-gold);
+            outline: none;
+        }
+
+        /* 结果区域过渡 */
+        #result-display {
+            transition: opacity 0.5s ease;
+        }
+        #question-display {
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-6 px-4 sm:px-6 lg:px-8 selection:bg-gray-500 selection:text-white relative overflow-hidden">
+
+    <header class="w-full max-w-4xl flex justify-between items-center z-10 shrink-0">
+        <a href="index.html" class="text-sm px-4 py-2 surface-card rounded-md cursor-pointer hover:border-gray-500 transition-colors" style="text-decoration: none;">← 返回</a>
+        <h1 class="text-2xl font-serif-sc tracking-widest text-center absolute left-1/2 -translate-x-1/2">圣杯</h1>
+        <div class="w-[74px]"></div>
+    </header>
+
+    <main class="w-full max-w-4xl flex-1 flex flex-col items-center justify-center z-10 relative">
+        
+        <section class="flex flex-col items-center justify-center w-full max-w-sm gap-12">
+            
+            <!-- 所问之事展示 -->
+            <div id="question-display" class="text-lg font-serif-sc tracking-widest opacity-0 min-h-[28px] text-center" style="color: var(--text-secondary);"></div>
+
+            <!-- 杯筊舞台 -->
+            <div id="cups-stage" class="scene flex justify-center items-center gap-4 sm:gap-8 relative w-full h-[200px]">
+                
+                <!-- 左杯 -->
+                <div id="cup-left" class="cup-wrapper" style="transform: rotateZ(15deg);">
+                    <div class="cup-face cup-front">
+                        <svg viewBox="0 0 100 200" class="w-full h-full drop-shadow-md">
+                            <path d="M 80,10 C 80,10 20,50 20,100 C 20,150 80,190 80,190 C 80,190 60,100 80,10 Z" fill="none" stroke="var(--accent-gold)" stroke-width="4"/>
+                            <text x="45" y="105" font-size="24" fill="var(--accent-gold)" class="font-serif-sc" text-anchor="middle">阳</text>
+                        </svg>
+                    </div>
+                    <div class="cup-face cup-back">
+                        <svg viewBox="0 0 100 200" class="w-full h-full drop-shadow-2xl">
+                            <path d="M 80,10 C 80,10 20,50 20,100 C 20,150 80,190 80,190 C 80,190 60,100 80,10 Z" fill="var(--accent-gold)"/>
+                            <text x="45" y="105" font-size="24" fill="var(--bg-surface)" class="font-serif-sc" text-anchor="middle">阴</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 右杯 -->
+                <div id="cup-right" class="cup-wrapper" style="transform: rotateZ(-15deg);">
+                    <div class="cup-face cup-front">
+                        <svg viewBox="0 0 100 200" class="w-full h-full drop-shadow-md">
+                            <path d="M 20,10 C 20,10 80,50 80,100 C 80,150 20,190 20,190 C 20,190 40,100 20,10 Z" fill="none" stroke="var(--accent-gold)" stroke-width="4"/>
+                            <text x="55" y="105" font-size="24" fill="var(--accent-gold)" class="font-serif-sc" text-anchor="middle">阳</text>
+                        </svg>
+                    </div>
+                    <div class="cup-face cup-back">
+                        <svg viewBox="0 0 100 200" class="w-full h-full drop-shadow-2xl">
+                            <path d="M 20,10 C 20,10 80,50 80,100 C 80,150 20,190 20,190 C 20,190 40,100 20,10 Z" fill="var(--accent-gold)"/>
+                            <text x="55" y="105" font-size="24" fill="var(--bg-surface)" class="font-serif-sc" text-anchor="middle">阴</text>
+                        </svg>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 结果展示 -->
+            <div id="result-display" class="flex flex-col items-center gap-2 opacity-0 min-h-[80px]">
+                <h2 id="result-title" class="text-4xl font-serif-sc tracking-[0.2em] text-accent">圣杯</h2>
+                <p id="result-desc" class="text-sm tracking-widest" style="color: var(--text-secondary);">此时可行</p>
+            </div>
+
+            <!-- 操作按钮 -->
+            <button id="prepare-btn" class="w-full py-4 rounded-xl text-white font-serif-sc tracking-[0.2em] hover:opacity-90 transition-opacity" style="background-color: var(--btn-primary);">
+                准备投杯
+            </button>
+            
+            <button id="reset-btn" class="hidden w-full py-3 surface-card rounded-md text-sm font-serif-sc tracking-widest cursor-pointer hover:border-gray-500 transition-colors text-center" style="text-decoration: none;">
+                重新请示
+            </button>
+
+        </section>
+    </main>
+
+    <!-- 所问何事 模态框 -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300 flex justify-center items-center px-4">
+        <div id="modal-content" class="surface-card w-full max-w-sm p-8 rounded-2xl transform scale-95 transition-transform duration-300 flex flex-col gap-6 shadow-2xl">
+            
+            <h3 class="text-xl font-serif-sc tracking-widest text-center" style="color: var(--text-main);">所问何事</h3>
+            
+            <input type="text" id="question-input" placeholder="请输入您心中的疑虑..." class="w-full bg-transparent border-b-2 py-3 px-2 text-center text-sm transition-colors" style="border-color: var(--border-base); color: var(--text-main);">
+            
+            <div class="flex flex-col gap-3 mt-2">
+                <button id="submit-input-btn" disabled class="w-full py-3 rounded-lg font-serif-sc tracking-widest transition-all opacity-50 cursor-not-allowed" style="background-color: var(--state-selected); color: var(--accent-gold);">
+                    输入完毕
+                </button>
+                <button id="silent-pray-btn" class="w-full py-3 rounded-lg border font-serif-sc text-sm tracking-widest transition-colors hover:bg-gray-500/10 cursor-pointer" style="border-color: var(--border-base); color: var(--text-secondary);">
+                    不想输入，心中默念
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // 核心 DOM 节点
+        const prepareBtn = document.getElementById('prepare-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalContent = document.getElementById('modal-content');
+        
+        const questionInput = document.getElementById('question-input');
+        const submitInputBtn = document.getElementById('submit-input-btn');
+        const silentPrayBtn = document.getElementById('silent-pray-btn');
+        
+        const questionDisplay = document.getElementById('question-display');
+        const resultDisplay = document.getElementById('result-display');
+        const resultTitle = document.getElementById('result-title');
+        const resultDesc = document.getElementById('result-desc');
+
+        const cupLeft = document.getElementById('cup-left');
+        const cupRight = document.getElementById('cup-right');
+
+        // 状态变量
+        let isAnimating = false;
+
+        // ====== 1. 模态框逻辑 ======
+        prepareBtn.addEventListener('click', () => {
+            modalOverlay.classList.add('modal-enter');
+            modalContent.classList.add('modal-scale-enter');
+            questionInput.focus();
+        });
+
+        function closeModal() {
+            modalOverlay.classList.remove('modal-enter');
+            modalContent.classList.remove('modal-scale-enter');
+        }
+
+        // 点击遮罩关闭
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        // 监听输入框，控制"输入完毕"按钮状态
+        questionInput.addEventListener('input', (e) => {
+            if (e.target.value.trim().length > 0) {
+                submitInputBtn.disabled = false;
+                submitInputBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitInputBtn.classList.add('hover:opacity-80', 'cursor-pointer');
+            } else {
+                submitInputBtn.disabled = true;
+                submitInputBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitInputBtn.classList.remove('hover:opacity-80', 'cursor-pointer');
+            }
+        });
+
+        // 回车键提交
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !submitInputBtn.disabled) {
+                submitInputBtn.click();
+            }
+        });
+
+        // 提交逻辑
+        submitInputBtn.addEventListener('click', () => {
+            questionDisplay.innerText = `问：${questionInput.value.trim()}`;
+            questionDisplay.style.opacity = 1;
+            closeModal();
+            startDivination();
+        });
+
+        silentPrayBtn.addEventListener('click', () => {
+            questionDisplay.innerText = "心中默念，神明已知";
+            questionDisplay.style.opacity = 1;
+            closeModal();
+            startDivination();
+        });
+
+
+        // ====== 2. 动画与投杯逻辑 ======
+        async function startDivination() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // UI 切换
+            prepareBtn.classList.add('hidden');
+            resultDisplay.style.opacity = 0; // 隐藏旧结果
+
+            // 生成随机结果 (0=平/阳, 1=凸/阴)
+            const resL = Math.floor(Math.random() * 2);
+            const resR = Math.floor(Math.random() * 2);
+
+            // 动画核心：使用 Web Animations API
+            
+            // 阶段 1: 合二为一 (向中间靠拢)
+            const mergeAnimL = cupLeft.animate([
+                { transform: 'translateX(0) rotateZ(15deg) rotateY(0)' },
+                { transform: 'translateX(40px) rotateZ(0deg) rotateY(0)' }
+            ], { duration: 500, fill: 'forwards', easing: 'ease-in-out' });
+            
+            const mergeAnimR = cupRight.animate([
+                { transform: 'translateX(0) rotateZ(-15deg) rotateY(0)' },
+                { transform: 'translateX(-40px) rotateZ(0deg) rotateY(0)' }
+            ], { duration: 500, fill: 'forwards', easing: 'ease-in-out' });
+
+            await Promise.all([mergeAnimL.finished, mergeAnimR.finished]);
+
+            // 阶段 2: 略微震动酝酿 (代表神明感应)
+            const shakeAnim = document.getElementById('cups-stage').animate([
+                { transform: 'translateY(0)' },
+                { transform: 'translateY(-10px)' },
+                { transform: 'translateY(5px)' },
+                { transform: 'translateY(-5px)' },
+                { transform: 'translateY(0)' }
+            ], { duration: 400, iterations: 2, easing: 'ease-in-out' });
+
+            await shakeAnim.finished;
+
+            // 阶段 3: 掷出、旋转、分开并落地
+            const finalRotYL = resL === 1 ? 180 : 0;
+            const finalRotYR = resR === 1 ? 180 : 0;
+
+            const tossAnimL = cupLeft.animate([
+                { transform: 'translateX(40px) translateY(0) rotateZ(0deg) rotateY(0) rotateX(0)' },
+                { transform: 'translateX(20px) translateY(-80px) rotateZ(45deg) rotateY(360deg) rotateX(180deg)' },
+                { transform: `translateX(-20px) translateY(0) rotateZ(${resL === 1 ? -15 : 15}deg) rotateY(${720 + finalRotYL}deg) rotateX(0)` }
+            ], { duration: 1000, fill: 'forwards', easing: 'cubic-bezier(0.25, 1, 0.5, 1)' });
+
+            const tossAnimR = cupRight.animate([
+                { transform: 'translateX(-40px) translateY(0) rotateZ(0deg) rotateY(0) rotateX(0)' },
+                { transform: 'translateX(-20px) translateY(-80px) rotateZ(-45deg) rotateY(360deg) rotateX(180deg)' },
+                { transform: `translateX(20px) translateY(0) rotateZ(${resR === 1 ? 15 : -15}deg) rotateY(${720 + finalRotYR}deg) rotateX(0)` }
+            ], { duration: 1000, fill: 'forwards', easing: 'cubic-bezier(0.25, 1, 0.5, 1)' });
+
+            await Promise.all([tossAnimL.finished, tossAnimR.finished]);
+
+            // 阶段 4: 解析结果并显示
+            parseResult(resL, resR);
+            resultDisplay.style.opacity = 1;
+            resetBtn.classList.remove('hidden');
+            
+            isAnimating = false;
+        }
+
+        // 解析杯象
+        function parseResult(l, r) {
+            // 0 是阳(平)，1 是阴(凸)
+            const sum = l + r;
+            
+            if (sum === 1) {
+                // 一平一凸 (0+1 或 1+0) = 圣杯
+                resultTitle.innerText = "圣杯";
+                resultTitle.style.color = "var(--accent-gold)";
+                resultDesc.innerText = "神明应允，此时可行";
+            } else if (sum === 0) {
+                // 两平 (0+0) = 笑杯
+                resultTitle.innerText = "笑杯";
+                resultTitle.style.color = "var(--text-main)";
+                resultDesc.innerText = "神明微笑，状况不明，可再次请示";
+            } else if (sum === 2) {
+                // 两凸 (1+1) = 阴杯 (怒杯)
+                resultTitle.innerText = "阴杯";
+                resultTitle.style.color = "var(--text-secondary)";
+                resultDesc.innerText = "神明不许，切勿强求";
+            }
+        }
+
+        // 重新请示
+        resetBtn.addEventListener('click', () => {
+            // 隐藏结果和按钮，恢复初始状态
+            resultDisplay.style.opacity = 0;
+            resetBtn.classList.add('hidden');
+            questionDisplay.style.opacity = 0;
+            questionInput.value = ''; // 清空输入框
+            submitInputBtn.disabled = true;
+            submitInputBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitInputBtn.classList.remove('hover:opacity-80', 'cursor-pointer');
+
+            // 杯子恢复原位
+            cupLeft.animate([{ transform: 'translateX(0) rotateZ(15deg) rotateY(0)' }], { duration: 300, fill: 'forwards' });
+            cupRight.animate([{ transform: 'translateX(0) rotateZ(-15deg) rotateY(0)' }], { duration: 300, fill: 'forwards' });
+
+            setTimeout(() => {
+                prepareBtn.classList.remove('hidden');
+            }, 300);
+        });
+
+    </script>
+</body>
+</html>
