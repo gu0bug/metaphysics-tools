@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>求签 - 知命</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            20% { transform: rotate(-10deg); }
+            40% { transform: rotate(10deg); }
+            60% { transform: rotate(-10deg); }
+            80% { transform: rotate(10deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .shaking {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        .vertical-text {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 0.5em;
+        }
+
+        .fortune-paper {
+            background-image: radial-gradient(#fff9f0 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-color: #fffdfa;
+            color: #2c1810;
+        }
+
+        html.dark .fortune-paper {
+            background-color: #1a1b1c;
+            color: #e0e0e0;
+            background-image: radial-gradient(#2a2a2a 1px, transparent 1px);
+        }
+
+        .poem-line {
+            border-left: 1px solid var(--accent-gold);
+            padding: 1rem 0.5rem;
+        }
+        
+        .poem-line:last-child {
+            border-right: 1px solid var(--accent-gold);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8 selection:bg-gray-500 selection:text-white">
+
+    <header class="w-full max-w-4xl flex justify-between items-center mb-12">
+        <a href="index.html" class="text-sm px-4 py-2 surface-card rounded-md cursor-pointer hover:text-accent transition-colors">
+            ← 返回首页
+        </a>
+        <h1 class="text-2xl font-serif-sc tracking-widest">求签</h1>
+        <div class="w-20"></div> <!-- Placeholder for symmetry -->
+    </header>
+
+    <main class="w-full max-w-lg flex flex-col items-center">
+        
+        <!-- Selection View -->
+        <div id="selection-view" class="w-full flex flex-col items-center gap-12">
+            <div class="relative group cursor-pointer" id="fortune-tube-container">
+                <div id="fortune-tube" class="transition-transform duration-300 group-hover:scale-105">
+                    <!-- Simple SVG Fortune Tube -->
+                    <svg width="120" height="200" viewBox="0 0 120 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="40" width="100" height="150" rx="10" fill="var(--btn-primary)" stroke="var(--accent-gold)" stroke-width="4"/>
+                        <rect x="20" y="10" width="10" height="60" rx="2" fill="var(--accent-gold)" transform="rotate(-15 20 10)"/>
+                        <rect x="55" y="5" width="10" height="60" rx="2" fill="var(--accent-gold)"/>
+                        <rect x="90" y="10" width="10" height="60" rx="2" fill="var(--accent-gold)" transform="rotate(15 90 10)"/>
+                        <text x="60" y="130" text-anchor="middle" fill="var(--accent-gold)" font-family="serif" font-size="24" style="writing-mode: tb;">灵签</text>
+                    </svg>
+                </div>
+                <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm tracking-widest opacity-60">
+                    心诚则灵 · 摇动求签
+                </div>
+            </div>
+
+            <button id="draw-button" class="w-full py-4 rounded-xl text-white font-serif-sc tracking-[0.5em] hover:opacity-90 transition-all active:scale-95 shadow-lg" style="background-color: var(--btn-primary);">
+                求 签
+            </button>
+            
+            <p class="text-xs text-center leading-loose opacity-50 max-w-xs">
+                闭目合十，默念心中所求之事，<br>待心境平和后，点击上方按钮求取签文。
+            </p>
+        </div>
+
+        <!-- Result View (Hidden by default) -->
+        <div id="result-view" class="w-full hidden flex flex-col items-center gap-8 animate-fade-in">
+            <div class="fortune-paper w-full rounded-sm border-2 border-double p-6 sm:p-10 shadow-2xl relative overflow-hidden" style="border-color: var(--accent-gold);">
+                <!-- Decorative Corners -->
+                <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2" style="border-color: var(--accent-gold);"></div>
+                <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2" style="border-color: var(--accent-gold);"></div>
+                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2" style="border-color: var(--accent-gold);"></div>
+                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2" style="border-color: var(--accent-gold);"></div>
+
+                <div class="text-center mb-10">
+                    <p id="fortune-index" class="text-xs tracking-widest opacity-60 mb-2"></p>
+                    <h2 id="fortune-level" class="text-4xl font-serif-sc tracking-[0.5em] text-accent">大吉</h2>
+                </div>
+
+                <div class="flex justify-center items-center gap-4 sm:gap-8 mb-12 min-h-[200px]">
+                    <div id="poem-container" class="flex flex-row-reverse gap-2 sm:gap-4 h-full">
+                        <!-- Poem lines will be injected here -->
+                    </div>
+                </div>
+
+                <div class="border-t pt-8 space-y-4">
+                    <h3 class="text-sm font-serif-sc tracking-widest text-accent flex items-center gap-2">
+                        <span class="w-1 h-4 bg-accent-gold inline-block"></span>
+                        签文解读
+                    </h3>
+                    <div id="fortune-advice" class="text-sm leading-relaxed text-justify opacity-80 font-serif-sc">
+                        <!-- Advice will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex w-full gap-4">
+                <button id="redraw-button" class="flex-1 py-3 surface-card rounded-md text-sm tracking-widest hover:border-accent transition-colors">
+                    重新求签
+                </button>
+                <button id="share-button" class="flex-1 py-3 surface-card rounded-md text-sm tracking-widest hover:border-accent transition-colors bg-accent text-white" style="background-color: var(--btn-primary);">
+                    分享签文
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="fortune_data.js"></script>
+    <script>
+        const selectionView = document.getElementById('selection-view');
+        const resultView = document.getElementById('result-view');
+        const drawButton = document.getElementById('draw-button');
+        const redrawButton = document.getElementById('redraw-button');
+        const tube = document.getElementById('fortune-tube');
+        
+        const levelEl = document.getElementById('fortune-level');
+        const indexEl = document.getElementById('fortune-index');
+        const poemEl = document.getElementById('poem-container');
+        const adviceEl = document.getElementById('fortune-advice');
+
+        const chineseNumbers = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+        function toChineseNum(n) {
+            if (n <= 10) return chineseNumbers[n];
+            if (n < 20) return "十" + (n % 10 === 0 ? "" : chineseNumbers[n % 10]);
+            if (n < 100) {
+                let ten = Math.floor(n / 10);
+                let one = n % 10;
+                return chineseNumbers[ten] + "十" + (one === 0 ? "" : chineseNumbers[one]);
+            }
+            return n;
+        }
+
+        function drawFortune() {
+            // Animation
+            tube.classList.add('shaking');
+            drawButton.disabled = true;
+            drawButton.innerText = '摇 动 中...';
+
+            setTimeout(() => {
+                tube.classList.remove('shaking');
+                
+                // Select random result
+                const randomIndex = Math.floor(Math.random() * FORTUNE_DATA.length);
+                const fortune = FORTUNE_DATA[randomIndex];
+                
+                showResult(fortune, randomIndex + 1);
+                
+                selectionView.classList.add('hidden');
+                resultView.classList.remove('hidden');
+                
+                drawButton.disabled = false;
+                drawButton.innerText = '求 签';
+            }, 1500);
+        }
+
+        function showResult(fortune, index) {
+            indexEl.innerText = `第 ${toChineseNum(index)} 签`;
+            levelEl.innerText = fortune.level;
+            
+            // Format poem
+            const lines = fortune.description.split('\n').filter(l => l.trim());
+            poemEl.innerHTML = '';
+            lines.forEach(line => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'vertical-text text-xl sm:text-2xl font-serif-sc poem-line';
+                lineDiv.innerText = line;
+                poemEl.appendChild(lineDiv);
+            });
+            
+            // Format advice
+            adviceEl.innerHTML = fortune.advice.replace(/\n/g, '<br>');
+        }
+
+        drawButton.addEventListener('click', drawFortune);
+        redrawButton.addEventListener('click', () => {
+            resultView.classList.add('hidden');
+            selectionView.classList.remove('hidden');
+        });
+
+        // Share button logic
+        document.getElementById('share-button').addEventListener('click', () => {
+            if (navigator.share) {
+                navigator.share({
+                    title: '我在知命求得一签',
+                    text: `我在知命求得第${indexEl.innerText}：${levelEl.innerText}。`,
+                    url: window.location.href
+                });
+            } else {
+                alert('请截屏保存您的签文');
+            }
+        });
+    </script>
+</body>
+
+</html>
