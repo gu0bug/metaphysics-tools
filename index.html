@@ -8,18 +8,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lunar-javascript/lunar.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <script src="theme.js"></script>
 </head>
 
 <body class="min-h-screen flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8 selection:bg-gray-500 selection:text-white">
 
     <header class="w-full max-w-4xl flex justify-between items-center mb-8">
         <h1 class="text-2xl font-serif-sc tracking-widest">知命</h1>
-        <button id="themeToggle" class="text-sm px-4 py-2 surface-card rounded-md cursor-pointer">
+        <button id="themeToggle" onclick="toggleTheme()" class="text-sm px-4 py-2 surface-card rounded-md cursor-pointer">
             切换昼夜模式
         </button>
     </header>
 
-    <main class="w-full max-w-4xl flex flex-col gap-6">
+    <main class="w-full max-w-4xl flex flex-col gap-6 flex-1">
 
         <section class="surface-card rounded-xl p-8 sm:p-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
             <div class="flex flex-col gap-2">
@@ -91,17 +92,6 @@
     </footer>
 
     <script>
-        const themeToggleBtn = document.getElementById('themeToggle');
-        const htmlElement = document.documentElement;
-
-        themeToggleBtn.addEventListener('click', () => {
-            if (htmlElement.classList.contains('dark')) {
-                htmlElement.classList.remove('dark');
-            } else {
-                htmlElement.classList.add('dark');
-            }
-        });
-
         // Initialize Lunar content
         const today = new Date();
         const lunar = Lunar.fromDate(today);
